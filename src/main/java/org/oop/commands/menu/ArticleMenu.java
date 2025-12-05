@@ -14,6 +14,10 @@ public class ArticleMenu extends BaseCommand {
         commandSuppliers.put(1, CreateArticleCommand::new);
         commandSuppliers.put(2, DeleteArticleCommand::new);
         commandSuppliers.put(3, MainMenu::new);
+        commandSuppliers.put(4, CommentMenu::new); // новый пункт
+        commandSuppliers.put(0, MainMenu::new);
+        commandSuppliers.put(5,AddCommentCommand::new);
+        commandSuppliers.put(6,ShowCommentCommand::new);
     }
 
     @Override

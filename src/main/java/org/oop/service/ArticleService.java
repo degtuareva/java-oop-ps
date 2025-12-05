@@ -5,6 +5,7 @@ import org.oop.api.IAuthService;
 import org.oop.api.dao.IArticleDao;
 import org.oop.di.Injector;
 import org.oop.model.Article;
+import org.oop.model.Comment;
 
 import java.util.List;
 
@@ -15,6 +16,12 @@ public class ArticleService implements IArticleService {
     public ArticleService() {
         this.articleDao = Injector.getInstance().getService(IArticleDao.class);
         this.authService = Injector.getInstance().getService(IAuthService.class);
+    }
+
+    // конструктор для тестов
+    public ArticleService(IArticleDao articleDao, IAuthService authService) {
+        this.articleDao = articleDao;
+        this.authService = authService;
     }
 
     @Override
@@ -37,6 +44,16 @@ public class ArticleService implements IArticleService {
     @Override
     public List<Article> getAllArticles() {
         return articleDao.getAllArticles();
+    }
+
+    @Override
+    public List<Comment> getCommentsByArticleId(int articleId) {
+        return List.of();
+    }
+
+    @Override
+    public Comment addCommentToArticle(int articleId, String comment) {
+        return null;
     }
 
     @Override

@@ -15,6 +15,7 @@ public class DatabaseService implements IDatabaseService {
     public DatabaseService() {
         this.configService = Injector.getInstance().getService(IConfigService.class);
     }
+
     @Override
     public void initializeDatabase() {
         {
@@ -39,14 +40,13 @@ public class DatabaseService implements IDatabaseService {
                             "user_id INTEGER," +
                             "comment_text TEXT NOT NULL," +
                             "FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE," +
-                            "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);" +
+                            "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);",
 
-                            "INSERT INTO users (username, password, email, role) " +
+                    "INSERT INTO users (username, password, email, role) " +
                             "SELECT 'admin', '$2a$10$ELqr66UvJgnkkN9e6hrYGO.brljJ//Y2MTpMpVfhdmgEUB0wmS2cC', 'admin@example.com', 'ADMIN' " +
-                            "WHERE NOT EXISTS (" +
-                            "SELECT * FROM users WHERE username = 'admin'" +
-                            ");"
+                            "WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin');"
             };
+
             String url = configService.getProperty("database.url");
             String user = configService.getProperty("database.user");
             String password = configService.getProperty("database.password");
