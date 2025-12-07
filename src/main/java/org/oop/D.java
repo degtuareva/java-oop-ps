@@ -7,62 +7,78 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class D {
+
     public void initializeDatabase() {
-        {
-            String[] initializationQueries = new String[]{
-                    "CREATE TABLE IF NOT EXISTS users (" +
-                            "id SERIAL PRIMARY KEY," +
-                            "username VARCHAR(50) NOT NULL," +
-                            "password VARCHAR(255) NOT NULL," +
-                            "email VARCHAR(100) NOT NULL," +
-                            "role VARCHAR(50) NOT NULL DEFAULT 'USER')",
+        String[] initializationQueries = new String[]{
+                // users
+                "CREATE TABLE IF NOT EXISTS users (" +
+                        "id SERIAL PRIMARY KEY," +
+                        "username VARCHAR(50) NOT NULL," +
+                        "password VARCHAR(255) NOT NULL," +
+                        "email VARCHAR(100) NOT NULL," +
+                        "role VARCHAR(50) NOT NULL DEFAULT 'USER')",
 
-                    "CREATE TABLE IF NOT EXISTS articles (" +
-                            "id SERIAL PRIMARY KEY," +
-                            "title VARCHAR(255) NOT NULL," +
-                            "content TEXT NOT NULL," +
-                            "author_id INTEGER," +
-                            "FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE);",
+                // articles
+                "CREATE TABLE IF NOT EXISTS articles (" +
+                        "id SERIAL PRIMARY KEY," +
+                        "title VARCHAR(255) NOT NULL," +
+                        "content TEXT NOT NULL," +
+                        "author_id INTEGER," +
+                        "FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE);",
 
-                    "CREATE TABLE IF NOT EXISTS comments (" +
-                            "id SERIAL PRIMARY KEY," +
-                            "article_id INTEGER," +
-                            "user_id INTEGER," +
-                            "comment_text TEXT NOT NULL," +
-                            "FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE," +
-                            "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);" +
+                // comments – предполагаем, что структура уже правильная,
+                // поэтому здесь можно вообще не создавать, либо оставить базовый CREATE:
+                "CREATE TABLE IF NOT EXISTS comments (" +
+                        "id SERIAL PRIMARY KEY," +
+                        "article_id INTEGER," +
+                        "user_id INTEGER," +
+                        "comment_text TEXT NOT NULL," +
+                        "FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE," +
+                        "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE);",
 
-                            "INSERT INTO users (username, password, email, role) " +
-                            "SELECT 'admin', '$2a$10$ELqr66UvJgnkkN9e6hrYGO.brljJ//Y2MTpMpVfhdmgEUB0wmS2cC', 'admin@example.com', 'ADMIN' " +
-                            "WHERE NOT EXISTS (" +
-                            "SELECT * FROM users WHERE username = 'admin'" +
-                            ");"
-            };
+                // админ
+                "INSERT INTO users (username, password, email, role) " +
+                        "SELECT 'admin', '$2a$10$ELqr66UvJgnkkN9e6hrYGO.brljJ//Y2MTpMpVfhdmgEUB0wmS2cC', 'admin@example.com', 'ADMIN' " +
+                        "WHERE NOT EXISTS (" +
+                        "SELECT * FROM users WHERE username = 'admin'" +
+                        ");"
+        };
 
-            try {
-                Class.forName("org.postgresql.Driver");
-            } catch (ClassNotFoundException ex) {
-                ex.printStackTrace();
-            }
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
 
-            try (Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/oopshop", "exampleuser", "examplepass");
-                 Statement stmt = conn.createStatement()) {
-                for (String sql : initializationQueries) {
+        try (Connection conn = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             Statement stmt = conn.createStatement()) {
+
+            for (String sql : initializationQueries) {
+                try {
                     stmt.execute(sql);
+                } catch (SQLException ex) {
+                    // Для учебного проекта можно просто логировать и идти дальше
+                    System.out.println("Skip init query error: " + ex.getMessage());
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     public String hashPassword(String plainTextPassword) {
-        // Возвращает хешированный пароль
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
     }
+
+    // ===== Статьи =====
+
     public Article ca(Article article) {
         String query = "INSERT INTO articles (title, content, author_id) VALUES (?, ?, ?)";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -95,7 +111,7 @@ public class D {
 
     public Article gai(long id) {
         String query = "SELECT id, title, content, author_id FROM articles WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -122,7 +138,7 @@ public class D {
     public List<Article> ga(String title) {
         List<Article> articles = new ArrayList<>();
         String query = "SELECT id, title, content, author_id FROM articles WHERE title LIKE ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -149,7 +165,7 @@ public class D {
     public List<Article> ga() {
         List<Article> articles = new ArrayList<>();
         String query = "SELECT id, title, content, author_id FROM articles";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -163,7 +179,6 @@ public class D {
                         resultSet.getString("title"),
                         resultSet.getString("content"),
                         resultSet.getLong("author_id")
-
                 );
                 articles.add(article);
             }
@@ -174,7 +189,7 @@ public class D {
     }
 
     public boolean ua(Article article) {
-        String query = "UPDATE articles SET title = ?, content = ?, author_id = ?, WHERE id = ?";
+        String query = "UPDATE articles SET title = ?, content = ?, author_id = ? WHERE id = ?";
         try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
@@ -184,8 +199,8 @@ public class D {
 
             preparedStatement.setString(1, article.title);
             preparedStatement.setString(2, article.content);
-            preparedStatement.setLong(3, article.id);
-            preparedStatement.setLong(4, article.authorId);
+            preparedStatement.setLong(3, article.authorId);
+            preparedStatement.setLong(4, article.id);
 
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
@@ -197,7 +212,7 @@ public class D {
 
     public boolean da(long id) {
         String query = "DELETE FROM articles WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -212,14 +227,17 @@ public class D {
         }
         return false;
     }
-    public User cu(User user) {
-        // Хеширование пароля перед сохранением в базу данных
-        user.password = hashPassword(user.password);
 
-        // SQL запрос для добавления нового пользователя
+    // ===== Пользователи =====
+
+    public User cu(User user) {
+        user.password = hashPassword(user.password);
         String query = "INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)";
-        // Прямое соединение с базой данных в методе - нарушает SRP
-        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/oopshop", "exampleuser", "examplepass");
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
              PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, user.username);
@@ -251,7 +269,7 @@ public class D {
         User user = null;
         String query = "SELECT id, username, password, email, role FROM users WHERE id = ?";
 
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -265,7 +283,7 @@ public class D {
                     user = new User(
                             resultSet.getInt("id"),
                             resultSet.getString("username"),
-                            resultSet.getString("password"), // Пароль должен быть хешированным
+                            resultSet.getString("password"),
                             resultSet.getString("email"),
                             Role.valueOf(resultSet.getString("role"))
                     );
@@ -281,7 +299,7 @@ public class D {
         User user = null;
         String query = "SELECT id, username, password, email, role FROM users WHERE username = ?";
 
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -310,7 +328,7 @@ public class D {
     public List<User> gau() {
         List<User> users = new ArrayList<>();
         String query = "SELECT id, username, password, email, role FROM users";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -322,7 +340,7 @@ public class D {
                 User user = new User(
                         resultSet.getInt("id"),
                         resultSet.getString("username"),
-                        resultSet.getString("password"), // Напоминание: пароль должен быть каким-то образом захеширован
+                        resultSet.getString("password"),
                         resultSet.getString("email"),
                         Role.valueOf(resultSet.getString("role"))
                 );
@@ -336,7 +354,7 @@ public class D {
 
     public boolean uu(User user) {
         String query = "UPDATE users SET username = ?, password = ?, email = ?, role = ? WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -359,7 +377,7 @@ public class D {
 
     public boolean du(int userId) {
         String query = "DELETE FROM users WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -377,7 +395,7 @@ public class D {
 
     public boolean cur(int userId, Role newRole) {
         String query = "UPDATE users SET role = ? WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -396,7 +414,6 @@ public class D {
     }
 
     public boolean cp(int userId, String newPassword) {
-        // Хеширование нового пароля
         String hashedPassword = hashPassword(newPassword);
         String query = "UPDATE users SET password = ? WHERE id = ?";
         try (Connection connection = DriverManager.getConnection(
@@ -415,5 +432,66 @@ public class D {
             e.printStackTrace();
         }
         return false;
+    }
+
+    // ===== Комментарии =====
+
+    public Comment cc(Comment comment) {
+        String sql = "INSERT INTO comments (article_id, user_id, comment_text) VALUES (?, ?, ?)";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setLong(1, comment.articleId);
+            ps.setLong(2, comment.userId);
+            ps.setString(3, comment.text);
+
+            int affected = ps.executeUpdate();
+            if (affected == 0) {
+                throw new SQLException("Creating comment failed, no rows affected.");
+            }
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    comment.id = keys.getLong(1);
+                } else {
+                    throw new SQLException("Creating comment failed, no ID obtained.");
+                }
+            }
+            return comment;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<Comment> gcByArticleId(long articleId) {
+        List<Comment> comments = new ArrayList<>();
+        String sql = "SELECT id, article_id, user_id, comment_text FROM comments WHERE article_id = ? ORDER BY id";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setLong(1, articleId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    comments.add(new Comment(
+                            rs.getLong("id"),
+                            rs.getLong("article_id"),
+                            rs.getLong("user_id"),
+                            rs.getString("comment_text")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return comments;
     }
 }
