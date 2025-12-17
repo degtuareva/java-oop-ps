@@ -57,6 +57,9 @@ public class Main {
                 System.out.println("12. Искать статью по заголовку");
                 System.out.println("13. Выйти");
                 System.out.print("Выберите опцию: ");
+                System.out.println("14. Добавить комментарий к статье");
+                System.out.println("15. Посмотреть комментарии статьи");
+
                 choosenOption = scanner.nextLine();
                 switch (choosenOption) {
                     //... Previous Switch Cases Omitted ...
@@ -90,10 +93,52 @@ public class Main {
                     default:
                         System.out.println("Неверная опция.");
                         break;
+                    case "14":
+                        addCommentToArticle(database);
+                        break;
+                    case "15":
+                        viewCommentsForArticle(database);
+                        break;
+
                 }
             }
         }
     }
+    static void addCommentToArticle(D database) {
+        System.out.print("Введите ID статьи: ");
+        long articleId = Long.parseLong(scanner.nextLine());
+        System.out.print("Введите текст комментария: ");
+        String text = scanner.nextLine();
+
+        if (loggedInUserId == 0) {
+            System.out.println("Нужно войти в систему, чтобы комментировать статьи.");
+            return;
+        }
+
+        Comment comment = new Comment(null, articleId, loggedInUserId, text);
+        Comment saved = database.cc(comment);
+        if (saved != null) {
+            System.out.println("Комментарий добавлен с ID: " + saved.id);
+        } else {
+            System.out.println("Не удалось добавить комментарий.");
+        }
+    }
+
+    static void viewCommentsForArticle(D database) {
+        System.out.print("Введите ID статьи: ");
+        long articleId = Long.parseLong(scanner.nextLine());
+
+        List<Comment> comments = database.gcByArticleId(articleId);
+        if (comments.isEmpty()) {
+            System.out.println("Комментариев для этой статьи нет.");
+        } else {
+            System.out.println("Комментарии к статье " + articleId + ":");
+            for (Comment c : comments) {
+                System.out.println("ID: " + c.id + ", userId: " + c.userId + ", text: " + c.text);
+            }
+        }
+    }
+
 
     static void printMenu(String title, List<String> options) {
         System.out.println(title);
@@ -337,4 +382,5 @@ public class Main {
         if (foundArticles.isEmpty()) System.out.println("Статьи не найдены.");
         foundArticles.forEach(a -> System.out.println("ID: " + a.id + ", Заголовок: " + a.title));
     }
+
 }
