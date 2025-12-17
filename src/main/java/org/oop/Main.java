@@ -3,7 +3,10 @@ package org.oop;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-
+//Нарушение DRY: логика добавления и вывода статей дублируется в нескольких методах (createArticle, addArticle(...), viewArticles, viewAllArticles, listAllArticles).
+// Это усложняет поддержку.
+// Лучше оставить один метод на действие и вызывать его из всех мест, где это нужно.
+//Нарушение KISS/DRY: пункты меню «Создать статью» (2) и «Добавить статью» (9) по смыслу дублируют друг друга, как и «Посмотреть все статьи» (3 и 10). Это добавляет путаницу пользователю и усложняет поддержку кода. Лучше оставить по одному пункту и одному методу на каждое действие.
 public class Main {
     static Scanner scanner;
     static boolean isLoggedIn = false;

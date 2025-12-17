@@ -3,6 +3,9 @@ package org.oop;
 import java.util.Objects;
 
 public class User {
+    // ласс содержит публичные пол€ -это нарушает инкапсул€цию и нарушает принцип KISS-открывает
+    // внутреннее состо€ние наружу. Ћучше сделать пол€ private и предоставить доступ к пол€м через
+    // геттеры и сеттеры
     public int id;
     public String username;
     public String password;

@@ -1,6 +1,9 @@
 package org.oop;
 
 public class Article {
+    //Класс содержит публичные поля -это нарушает инкапсуляцию и нарушает принцип KISS-открывает
+    // внутреннее состояние наружу. Лучше сделать поля private и предоставить доступ к полям через
+    // геттеры и сеттеры
     public Long id;
     public String title;
     public String content;
